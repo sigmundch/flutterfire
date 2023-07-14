@@ -4,7 +4,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'dart:io';
-import 'package:js/js_util.dart';
+import 'dart:js_util';
 
 import 'package:firebase_auth_platform_interface/firebase_auth_platform_interface.dart';
 import 'package:firebase_auth_web/firebase_auth_web.dart';
@@ -15,6 +15,23 @@ import 'package:firebase_core_web/firebase_core_web_interop.dart'
 import '../interop/auth.dart' as auth_interop;
 import '../interop/multi_factor.dart' as multi_factor_interop;
 
+/// Workaround test to check whether `e` is practically a FirebaseError.
+///
+/// Ideally we'd check whether `e instanceof FirebaseError` however
+/// there are two definitions of `FirebaseError` in deployed apps, one from
+/// `firebase-auth.js` (which is usually minified) and one from
+/// `firebase-app.js`.
+///
+/// Because they are not the same, the instanceof check fails. Instead, we test
+/// that it is a window.Error (since that's the base class of FirebaseError) and
+/// we check that it defines some of the properties we expect to use, such as
+/// `.code`.
+bool _isFirebaseError(Object e) =>
+  instanceof(e, getProperty(globalThis, 'Error')) &&
+  hasProperty(e, 'code') &&
+  hasProperty(e, 'message');
+
+
 /// Given a web error, an [Exception] is returned.
 ///
 /// The firebase-dart wrapper exposes a [core_interop.FirebaseError], allowing us to
@@ -23,7 +40,7 @@ FirebaseAuthException getFirebaseAuthException(
   Object exception, [
   auth_interop.Auth? auth,
 ]) {
-  if (instanceof(exception, core_interop.firebaseErrorJSConstructor)) {
+  if (!_isFirebaseError(exception)) {
     return FirebaseAuthException(
       code: 'unknown',
       message: 'An unknown error occurred: $exception',

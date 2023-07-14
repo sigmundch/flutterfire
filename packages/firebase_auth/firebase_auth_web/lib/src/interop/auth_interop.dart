@@ -539,8 +539,12 @@ class UserProfile {
 /// An authentication error.
 ///
 /// See: <https://firebase.google.com/docs/reference/js/firebase.auth.Error>.
-@JS('Error')
+@JS()
+@staticInterop
 abstract class AuthError {
+}
+
+extension AuthErrorExtension on AuthError {
   external String get code;
   external set code(String s);
   external String get message;
@@ -708,9 +712,13 @@ class MultiFactorAssertionJsImpl {
 }
 
 /// https://firebase.google.com/docs/reference/js/auth.multifactorerror
-@JS('Error')
+@JS()
 @anonymous
+@staticInterop
 class MultiFactorError extends AuthError {
+}
+
+extension MultiFactorErrorExtension on MultiFactorError {
   external dynamic get customData;
 }
 
